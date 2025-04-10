@@ -1,0 +1,47 @@
+# Final filtered phoneme set (expected IPA phoneme set, 39 symbols)
+final_phoneme_set = {
+    'aɪ', 'aʊ', 'b', 'd', 'dʒ', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n',
+    'o', 'p', 's', 't', 'tʃ', 'u', 'v', 'w', 'z', 'æ', 'ð', 'ŋ', 'ɑ', 'ɔ', 'ɔɪ',
+    'ə', 'ɛ', 'ɝ', 'ɪ', 'ɹ', 'ʃ', 'ʊ', 'ʌ', 'ʒ', 'θ'
+}
+
+# Convert the set to a sorted list for consistency
+final_phoneme_list = sorted(final_phoneme_set)
+
+if " " in final_phoneme_list:
+    idx = final_phoneme_list.index(" ")
+    final_phoneme_list[idx] = "|"
+
+# Append special tokens for CTC training
+final_phoneme_list.append("[UNK]")
+final_phoneme_list.append("[PAD]")
+
+# Create the vocabulary mapping: token -> index
+vocab = { token: idx for idx, token in enumerate(final_phoneme_list) }
+
+print("Vocabulary:")
+print(vocab)
+print(len(vocab))
+# delimeter for tokenizing word boundaries.
+final_phoneme_list.append(" ")
+
+# Create vocabulary mapping
+vocab = { token: idx for idx, token in enumerate(final_phoneme_list) }
+import json
+
+vocab_path = "vocab.json"
+with open(vocab_path, "w") as f:
+    json.dump(vocab, f)  # Save dictionary
+vocab_path = "vocab.json"
+with open(vocab_path, "r") as f:
+    saved_vocab = json.load(f)
+from transformers import Wav2Vec2CTCTokenizer
+
+# Load the tokenizer using the saved vocabulary file
+tokenizer = Wav2Vec2CTCTokenizer("vocab.json", unk_token="[UNK]", pad_token="[PAD]", word_delimiter_token=" ")
+
+# Save the tokenizer
+tokenizer.save_pretrained("wav2vec2-tokenizer")
+from transformers import Wav2Vec2FeatureExtractor
+
+feature_extractor = Wav2Vec2FeatureExtractor(feature_size=1, sampling_rate=16000, padding_value=0.0, do_normalize=True, return_attention_mask=False)
